@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#17181c" />
+  <title>감상 저장소</title>
+  <style>
+    :root {
+      --bg: #f5f5f2;
+      --surface: #ffffff;
+      --surface-2: #eeeee9;
+      --text: #17181c;
+      --muted: #74767f;
+      --line: #dedfd9;
+      --accent: #6d55e7;
+      --accent-soft: #ece8ff;
+      --danger: #d94b53;
+      --shadow: 0 16px 42px rgba(31, 32, 38, 0.10);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(109, 85, 231, .11), transparent 28rem),
+        var(--bg);
+      font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, input, textarea { font: inherit; }
+    button { color: inherit; }
+
+    .app-shell {
+      width: min(100%, 760px);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 0 20px calc(108px + var(--safe-bottom));
+      position: relative;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      margin: 0 -20px;
+      padding: max(18px, env(safe-area-inset-top)) 20px 14px;
+      background: rgba(245, 245, 242, .88);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(222, 223, 217, .72);
+    }
+
+    .topbar-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .eyebrow {
+      margin: 0 0 4px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      margin-bottom: 0;
+      font-size: clamp(28px, 8vw, 40px);
+      line-height: 1.06;
+      letter-spacing: -.045em;
+    }
+
+    .count-badge {
+      flex: 0 0 auto;
+      min-width: 58px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: var(--text);
+      color: #fff;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .count-badge strong {
+      display: block;
+      font-size: 18px;
+    }
+
+    .screen { display: none; padding-top: 22px; }
+    .screen.active { display: block; animation: fadeUp .28s ease; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-intro {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .section-intro h2 {
+      margin-bottom: 6px;
+      font-size: 23px;
+      letter-spacing: -.03em;
+    }
+
+    .section-intro p {
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .chips {
+      display: flex;
+      gap: 9px;
+      overflow-x: auto;
+      padding: 2px 0 14px;
+      scrollbar-width: none;
+    }
+    .chips::-webkit-scrollbar { display: none; }
+
+    .chip {
+      flex: 0 0 auto;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.74);
+      border-radius: 999px;
+      padding: 10px 15px;
+      font-size: 14px;
+      font-weight: 750;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+
+    .chip.active {
+      border-color: var(--text);
+      background: var(--text);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    .record-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .record-card {
+      border: 0;
+      padding: 0;
+      text-align: left;
+      background: transparent;
+      cursor: pointer;
+      min-width: 0;
+    }
+
+    .cover {
+      position: relative;
+      aspect-ratio: 4 / 5;
+      overflow: hidden;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(145deg, #dedee6, #f9f9f7);
+      box-shadow: 0 10px 24px rgba(31,32,38,.07);
+    }
+
+    .cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform .3s ease;
+    }
+
+    .record-card:hover .cover img { transform: scale(1.025); }
+
+    .placeholder-cover {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 75% 25%, rgba(255,255,255,.6), transparent 27%),
+        linear-gradient(145deg, var(--card-a), var(--card-b));
+      font-size: clamp(42px, 15vw, 72px);
+    }
+
+    .category-pill {
+      position: absolute;
+      top: 11px;
+      left: 11px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(18,18,22,.72);
+      backdrop-filter: blur(10px);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .card-body { padding: 11px 3px 3px; }
+
+    .card-title {
+      margin: 0 0 5px;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -.02em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .stars-small { color: #f5a623; letter-spacing: -1px; }
+
+    .empty-state {
+      display: none;
+      text-align: center;
+      padding: 72px 20px 44px;
+      border: 1px dashed #cfd0c9;
+      border-radius: var(--radius-xl);
+      background: rgba(255,255,255,.62);
+    }
+
+    .empty-state.show { display: block; }
+    .empty-icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state h3 { margin-bottom: 8px; font-size: 20px; }
+    .empty-state p { color: var(--muted); line-height: 1.6; margin-bottom: 22px; }
+
+    .primary-btn, .secondary-btn, .danger-btn {
+      border: 0;
+      border-radius: 15px;
+      padding: 14px 18px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .15s ease, opacity .15s ease;
+    }
+
+    .primary-btn:active, .secondary-btn:active, .danger-btn:active { transform: scale(.98); }
+    .primary-btn { background: var(--accent); color: #fff; }
+    .secondary-btn { background: var(--surface-2); color: var(--text); }
+    .danger-btn { background: #fff0f1; color: var(--danger); }
+    .full-btn { width: 100%; }
+
+    .stats-hero {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      color: #fff;
+      background: #191a20;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+
+    .stats-hero::after {
+      content: "";
+      position: absolute;
+      width: 210px;
+      height: 210px;
+      border-radius: 50%;
+      right: -65px;
+      top: -80px;
+      background: linear-gradient(145deg, rgba(132,104,255,.85), rgba(255,255,255,.08));
+      filter: blur(1px);
+    }
+
+    .stats-kicker { color: #b8b1ff; font-size: 13px; font-weight: 800; }
+    .average-score {
+      position: relative;
+      z-index: 1;
+      margin: 8px 0 4px;
+      font-size: clamp(54px, 18vw, 88px);
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -.07em;
+    }
+    .average-caption { position: relative; z-index: 1; color: #c7c8cf; margin: 0; }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      padding: 20px;
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      border: 1px solid rgba(222,223,217,.8);
+    }
+
+    .stat-label { color: var(--muted); font-size: 12px; font-weight: 750; }
+    .stat-value { margin: 9px 0 0; font-size: 29px; font-weight: 900; letter-spacing: -.04em; }
+
+    .breakdown {
+      padding: 22px;
+      border-radius: var(--radius-xl);
+      background: var(--surface);
+      border: 1px solid rgba(222,223,217,.8);
+    }
+
+    .breakdown h3 { margin-bottom: 18px; font-size: 18px; }
+    .bar-row { margin-bottom: 16px; }
+    .bar-row:last-child { margin-bottom: 0; }
+    .bar-head { display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 13px; font-weight: 750; }
+    .bar-track { height: 10px; overflow: hidden; border-radius: 99px; background: var(--surface-2); }
+    .bar-fill { height: 100%; border-radius: inherit; background: var(--accent); transition: width .5s ease; }
+
+    .bottom-nav {
+      position: fixed;
+      z-index: 40;
+      left: 50%;
+      bottom: max(14px, var(--safe-bottom));
+      transform: translateX(-50%);
+      width: min(calc(100% - 28px), 700px);
+      height: 72px;
+      border: 1px solid rgba(255,255,255,.5);
+      border-radius: 24px;
+      padding: 8px 18px;
+      display: grid;
+      grid-template-columns: 1fr 86px 1fr;
+      align-items: center;
+      background: rgba(24,25,30,.94);
+      box-shadow: 0 18px 55px rgba(25,26,32,.28);
+      backdrop-filter: blur(18px);
+    }
+
+    .nav-btn {
+      border: 0;
+      background: transparent;
+      color: #9c9da5;
+      padding: 7px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .nav-btn span { display: block; font-size: 22px; line-height: 1; margin-bottom: 3px; }
+    .nav-btn.active { color: #fff; }
+
+    .add-fab {
+      width: 62px;
+      height: 62px;
+      justify-self: center;
+      border: 6px solid var(--bg);
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 32px;
+      line-height: 1;
+      cursor: pointer;
+      transform: translateY(-24px);
+      box-shadow: 0 12px 26px rgba(109,85,231,.38);
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      background: rgba(18,18,22,.46);
+      backdrop-filter: blur(5px);
+    }
+
+    .modal.show { display: flex; animation: fade .2s ease; }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+    .sheet {
+      width: min(100%, 760px);
+      max-height: 94vh;
+      overflow-y: auto;
+      border-radius: 30px 30px 0 0;
+      padding: 12px 20px calc(26px + var(--safe-bottom));
+      background: var(--surface);
+      box-shadow: 0 -20px 80px rgba(25,26,32,.22);
+      animation: sheetUp .28s cubic-bezier(.2,.8,.2,1);
+    }
+
+    @keyframes sheetUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .sheet-handle {
+      width: 42px;
+      height: 5px;
+      margin: 0 auto 18px;
+      border-radius: 99px;
+      background: #d7d8d3;
+    }
+
+    .sheet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .sheet-header h2 { margin: 0; font-size: 24px; letter-spacing: -.03em; }
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      border: 0;
+      border-radius: 50%;
+      background: var(--surface-2);
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .field { margin-bottom: 19px; }
+    .field-label { display: block; margin-bottom: 9px; font-size: 13px; font-weight: 800; }
+    .required::after { content: " *"; color: var(--danger); }
+
+    .category-options {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .category-option {
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      padding: 12px 4px;
+      background: #fff;
+      cursor: pointer;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 800;
+      transition: .18s ease;
+    }
+    .category-option .emoji { display: block; margin-bottom: 5px; font-size: 23px; }
+    .category-option.selected { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+
+    .text-input, .text-area {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      padding: 14px 15px;
+      color: var(--text);
+      background: #fbfbf9;
+      outline: none;
+      transition: border .18s ease, box-shadow .18s ease;
+    }
+
+    .text-input:focus, .text-area:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-soft);
+    }
+
+    .text-area { min-height: 116px; resize: vertical; line-height: 1.55; }
+
+    .image-picker {
+      position: relative;
+      min-height: 150px;
+      overflow: hidden;
+      border: 1.5px dashed #c8c9c2;
+      border-radius: var(--radius-lg);
+      background: #fafaf7;
+      cursor: pointer;
+    }
+
+    .image-picker input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .picker-copy { padding: 36px 15px; text-align: center; color: var(--muted); }
+    .picker-copy strong { display: block; color: var(--text); margin-bottom: 6px; }
+    .picker-icon { font-size: 32px; margin-bottom: 8px; }
+
+    .preview-wrap { display: none; position: relative; height: 250px; }
+    .preview-wrap.show { display: block; }
+    .preview-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .remove-image {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      border: 0;
+      border-radius: 999px;
+      padding: 8px 11px;
+      background: rgba(18,18,22,.72);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .rating-input { display: flex; gap: 6px; }
+    .star-btn {
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: #d9d9d3;
+      font-size: 35px;
+      cursor: pointer;
+      transition: transform .12s ease, color .12s ease;
+    }
+    .star-btn.active { color: #f5a623; }
+    .star-btn:active { transform: scale(.9); }
+
+    .form-error {
+      display: none;
+      margin: -5px 0 15px;
+      padding: 11px 13px;
+      border-radius: 12px;
+      background: #fff0f1;
+      color: var(--danger);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .form-error.show { display: block; }
+
+    .detail-cover {
+      aspect-ratio: 16 / 10;
+      overflow: hidden;
+      border-radius: var(--radius-lg);
+      margin-bottom: 20px;
+      background: var(--surface-2);
+    }
+    .detail-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .detail-cover .placeholder-cover { font-size: 72px; }
+    .detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; }
+    .detail-head h2 { margin-bottom: 6px; }
+    .detail-meta { color: var(--muted); font-size: 13px; }
+    .detail-rating { margin: 18px 0; color: #f5a623; font-size: 25px; letter-spacing: 1px; }
+    .detail-review { white-space: pre-wrap; line-height: 1.7; color: #45474f; }
+    .detail-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 22px; }
+
+    .toast {
+      position: fixed;
+      z-index: 120;
+      left: 50%;
+      bottom: 110px;
+      transform: translate(-50%, 20px);
+      opacity: 0;
+      pointer-events: none;
+      padding: 12px 16px;
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(24,25,30,.94);
+      box-shadow: var(--shadow);
+      font-size: 13px;
+      font-weight: 750;
+      transition: .25s ease;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (min-width: 620px) {
+      .record-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .sheet { border-radius: 30px; margin-bottom: 20px; }
+      .modal { align-items: center; padding: 20px; }
+    }
+
+    @media (max-width: 380px) {
+      .app-shell { padding-left: 15px; padding-right: 15px; }
+      .topbar { margin-left: -15px; margin-right: -15px; padding-left: 15px; padding-right: 15px; }
+      .record-grid { gap: 10px; }
+      .category-options { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="topbar-row">
+        <div>
+          <p class="eyebrow">My culture archive</p>
+          <h1>감상 저장소</h1>
+        </div>
+        <div class="count-badge"><strong id="headerCount">0</strong>기록</div>
+      </div>
+    </header>
+
+    <section id="homeScreen" class="screen active" aria-label="감상 기록 목록">
+      <div class="section-intro">
+        <div>
+          <h2>나의 컬렉션</h2>
+          <p>영화, 음악, 책, 게임 감상을 한곳에 기록합니다.</p>
+        </div>
+      </div>
+
+      <div id="filterChips" class="chips" aria-label="카테고리 필터"></div>
+      <div id="recordGrid" class="record-grid"></div>
+
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon">🗂️</div>
+        <h3>아직 기록이 없습니다</h3>
+        <p>아래의 + 버튼을 눌러 첫 감상을 저장해보세요.<br>기록은 현재 브라우저에 안전하게 보관됩니다.</p>
+        <button id="emptyAddBtn" class="primary-btn">첫 기록 추가</button>
+      </div>
+    </section>
+
+    <section id="statsScreen" class="screen" aria-label="감상 통계">
+      <div class="section-intro">
+        <div>
+          <h2>문화생활 대시보드</h2>
+          <p>내가 남긴 기록을 숫자로 확인합니다.</p>
+        </div>
+      </div>
+
+      <div class="stats-hero">
+        <div class="stats-kicker">평균 별점</div>
+        <div id="averageScore" class="average-score">0.0</div>
+        <p id="averageCaption" class="average-caption">기록을 추가하면 평균 별점이 계산됩니다.</p>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">전체 기록</div>
+          <p id="totalStat" class="stat-value">0</p>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">가장 많이 본 분야</div>
+          <p id="topCategoryStat" class="stat-value">-</p>
+        </div>
+      </div>
+
+      <div class="breakdown">
+        <h3>카테고리별 기록</h3>
+        <div id="categoryBars"></div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="하단 메뉴">
+    <button class="nav-btn active" data-screen="homeScreen"><span>⌂</span>기록</button>
+    <button id="addFab" class="add-fab" aria-label="새 기록 추가">+</button>
+    <button class="nav-btn" data-screen="statsScreen"><span>◔</span>통계</button>
+  </nav>
+
+  <div id="formModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="formTitle">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <h2 id="formTitle">새 감상 기록</h2>
+        <button class="icon-btn" id="closeFormBtn" aria-label="닫기">×</button>
+      </div>
+
+      <form id="recordForm" novalidate>
+        <input type="hidden" id="editingId" />
+
+        <div class="field">
+          <span class="field-label required">카테고리</span>
+          <div id="categoryOptions" class="category-options"></div>
+        </div>
+
+        <div class="field">
+          <label for="titleInput" class="field-label required">작품 제목</label>
+          <input id="titleInput" class="text-input" type="text" maxlength="80" placeholder="예: 퍼펙트 데이즈" autocomplete="off" />
+        </div>
+
+        <div class="field">
+          <span class="field-label">사진</span>
+          <label class="image-picker" id="imagePicker">
+            <input id="imageInput" type="file" accept="image/*" capture="environment" />
+            <div id="pickerCopy" class="picker-copy">
+              <div class="picker-icon">▧</div>
+              <strong>사진을 선택하거나 촬영하세요</strong>
+              JPG, PNG 등 이미지 파일을 자동으로 최적화합니다.
+            </div>
+            <div id="previewWrap" class="preview-wrap">
+              <img id="imagePreview" alt="선택한 이미지 미리보기" />
+              <button id="removeImageBtn" class="remove-image" type="button">사진 삭제</button>
+            </div>
+          </label>
+        </div>
+
+        <div class="field">
+          <span class="field-label">별점</span>
+          <div id="ratingInput" class="rating-input" aria-label="별점 선택"></div>
+        </div>
+
+        <div class="field">
+          <label for="reviewInput" class="field-label">감상평</label>
+          <textarea id="reviewInput" class="text-area" maxlength="1000" placeholder="인상 깊었던 장면, 문장, 음악이나 플레이 경험을 기록해보세요."></textarea>
+        </div>
+
+        <div id="formError" class="form-error"></div>
+        <button id="saveBtn" class="primary-btn full-btn" type="submit">저장하기</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="detailModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <h2>기록 상세</h2>
+        <button class="icon-btn" id="closeDetailBtn" aria-label="닫기">×</button>
+      </div>
+      <div id="detailContent"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const STORAGE_KEY = 'gamsang-repository-v1';
+      const categories = [
+        { id: 'movie', label: '영화', emoji: '🎬', colors: ['#7f8fe8', '#d6dcff'] },
+        { id: 'music', label: '음악', emoji: '🎧', colors: ['#e87fa4', '#ffd5e3'] },
+        { id: 'book', label: '책', emoji: '📚', colors: ['#e3a25e', '#ffe1bb'] },
+        { id: 'game', label: '게임', emoji: '🎮', colors: ['#59b990', '#c8f2df'] }
+      ];
+
+      const state = {
+        records: loadRecords(),
+        filter: 'all',
+        selectedCategory: '',
+        rating: 0,
+        imageData: ''
+      };
+
+      const el = {
+        headerCount: document.getElementById('headerCount'),
+        filterChips: document.getElementById('filterChips'),
+        recordGrid: document.getElementById('recordGrid'),
+        emptyState: document.getElementById('emptyState'),
+        addFab: document.getElementById('addFab'),
+        emptyAddBtn: document.getElementById('emptyAddBtn'),
+        navButtons: document.querySelectorAll('.nav-btn'),
+        screens: document.querySelectorAll('.screen'),
+        formModal: document.getElementById('formModal'),
+        detailModal: document.getElementById('detailModal'),
+        closeFormBtn: document.getElementById('closeFormBtn'),
+        closeDetailBtn: document.getElementById('closeDetailBtn'),
+        recordForm: document.getElementById('recordForm'),
+        formTitle: document.getElementById('formTitle'),
+        editingId: document.getElementById('editingId'),
+        categoryOptions: document.getElementById('categoryOptions'),
+        titleInput: document.getElementById('titleInput'),
+        imageInput: document.getElementById('imageInput'),
+        pickerCopy: document.getElementById('pickerCopy'),
+        previewWrap: document.getElementById('previewWrap'),
+        imagePreview: document.getElementById('imagePreview'),
+        removeImageBtn: document.getElementById('removeImageBtn'),
+        ratingInput: document.getElementById('ratingInput'),
+        reviewInput: document.getElementById('reviewInput'),
+        formError: document.getElementById('formError'),
+        saveBtn: document.getElementById('saveBtn'),
+        detailContent: document.getElementById('detailContent'),
+        toast: document.getElementById('toast'),
+        averageScore: document.getElementById('averageScore'),
+        averageCaption: document.getElementById('averageCaption'),
+        totalStat: document.getElementById('totalStat'),
+        topCategoryStat: document.getElementById('topCategoryStat'),
+        categoryBars: document.getElementById('categoryBars')
+      };
+
+      function loadRecords() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          return Array.isArray(saved) ? saved : [];
+        } catch (error) {
+          console.warn('저장 데이터를 불러오지 못했습니다.', error);
+          return [];
+        }
+      }
+
+      function persistRecords() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state.records));
+          return true;
+        } catch (error) {
+          console.error('저장 공간 오류', error);
+          showToast('저장 공간이 부족합니다. 더 작은 사진을 사용해주세요.');
+          return false;
+        }
+      }
+
+      function getCategory(id) {
+        return categories.find(category => category.id === id) || categories[0];
+      }
+
+      function escapeHTML(value = '') {
+        return String(value)
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#039;');
+      }
+
+      function createId() {
+        return window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      }
+
+      function formatDate(timestamp) {
+        return new Intl.DateTimeFormat('ko-KR', {
+          year: 'numeric', month: 'short', day: 'numeric'
+        }).format(new Date(timestamp));
+      }
+
+      function renderFilters() {
+        const filters = [{ id: 'all', label: '전체' }, ...categories];
+        el.filterChips.innerHTML = filters.map(item => `
+          <button class="chip ${state.filter === item.id ? 'active' : ''}" data-filter="${item.id}">
+            ${item.emoji ? `${item.emoji} ` : ''}${item.label}
+          </button>
+        `).join('');
+
+        el.filterChips.querySelectorAll('.chip').forEach(button => {
+          button.addEventListener('click', () => {
+            state.filter = button.dataset.filter;
+            renderFilters();
+            renderRecords();
+          });
+        });
+      }
+
+      function renderRecords() {
+        const filtered = state.records
+          .filter(record => state.filter === 'all' || record.category === state.filter)
+          .sort((a, b) => b.createdAt - a.createdAt);
+
+        el.headerCount.textContent = state.records.length;
+        el.emptyState.classList.toggle('show', filtered.length === 0);
+        el.recordGrid.style.display = filtered.length ? 'grid' : 'none';
+
+        el.recordGrid.innerHTML = filtered.map(record => {
+          const category = getCategory(record.category);
+          const rating = Number(record.rating) || 0;
+          const coverHTML = record.image
+            ? `<img src="${record.image}" alt="${escapeHTML(record.title)} 이미지" loading="lazy">`
+            : `<div class="placeholder-cover" style="--card-a:${category.colors[0]};--card-b:${category.colors[1]}">${category.emoji}</div>`;
+
+          return `
+            <button class="record-card" data-id="${record.id}">
+              <div class="cover">
+                ${coverHTML}
+                <span class="category-pill">${category.emoji} ${category.label}</span>
+              </div>
+              <div class="card-body">
+                <h3 class="card-title">${escapeHTML(record.title)}</h3>
+                <div class="card-meta">
+                  <span class="stars-small">${rating ? '★'.repeat(rating) + '☆'.repeat(5 - rating) : '별점 없음'}</span>
+                  <span>${formatDate(record.createdAt)}</span>
+                </div>
+              </div>
+            </button>
+          `;
+        }).join('');
+
+        el.recordGrid.querySelectorAll('.record-card').forEach(card => {
+          card.addEventListener('click', () => openDetail(card.dataset.id));
+        });
+      }
+
+      function renderCategoryOptions() {
+        el.categoryOptions.innerHTML = categories.map(category => `
+          <button type="button" class="category-option ${state.selectedCategory === category.id ? 'selected' : ''}" data-category="${category.id}">
+            <span class="emoji">${category.emoji}</span>${category.label}
+          </button>
+        `).join('');
+
+        el.categoryOptions.querySelectorAll('.category-option').forEach(button => {
+          button.addEventListener('click', () => {
+            state.selectedCategory = button.dataset.category;
+            renderCategoryOptions();
+            hideFormError();
+          });
+        });
+      }
+
+      function renderRatingInput() {
+        el.ratingInput.innerHTML = [1, 2, 3, 4, 5].map(value => `
+          <button type="button" class="star-btn ${value <= state.rating ? 'active' : ''}" data-rating="${value}" aria-label="${value}점">★</button>
+        `).join('');
+
+        el.ratingInput.querySelectorAll('.star-btn').forEach(button => {
+          button.addEventListener('click', () => {
+            const value = Number(button.dataset.rating);
+            state.rating = state.rating === value ? 0 : value;
+            renderRatingInput();
+          });
+        });
+      }
+
+      function renderStats() {
+        const total = state.records.length;
+        const rated = state.records.filter(record => Number(record.rating) > 0);
+        const average = rated.length
+          ? rated.reduce((sum, record) => sum + Number(record.rating), 0) / rated.length
+          : 0;
+
+        const counts = Object.fromEntries(categories.map(category => [category.id, 0]));
+        state.records.forEach(record => {
+          if (counts[record.category] !== undefined) counts[record.category] += 1;
+        });
+
+        const top = categories
+          .map(category => ({ ...category, count: counts[category.id] }))
+          .sort((a, b) => b.count - a.count)[0];
+
+        el.averageScore.textContent = average.toFixed(1);
+        el.averageCaption.textContent = rated.length
+          ? `${rated.length}개의 별점이 반영되었습니다.`
+          : '기록을 추가하면 평균 별점이 계산됩니다.';
+        el.totalStat.textContent = total;
+        el.topCategoryStat.textContent = top && top.count > 0 ? `${top.emoji} ${top.label}` : '-';
+
+        const maxCount = Math.max(...Object.values(counts), 1);
+        el.categoryBars.innerHTML = categories.map(category => {
+          const count = counts[category.id];
+          const width = (count / maxCount) * 100;
+          return `
+            <div class="bar-row">
+              <div class="bar-head"><span>${category.emoji} ${category.label}</span><span>${count}개</span></div>
+              <div class="bar-track"><div class="bar-fill" style="width:${width}%"></div></div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function showScreen(screenId) {
+        el.screens.forEach(screen => screen.classList.toggle('active', screen.id === screenId));
+        el.navButtons.forEach(button => button.classList.toggle('active', button.dataset.screen === screenId));
+        if (screenId === 'statsScreen') renderStats();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function openForm(record = null) {
+        resetForm();
+        if (record) {
+          el.formTitle.textContent = '감상 기록 수정';
+          el.saveBtn.textContent = '수정 완료';
+          el.editingId.value = record.id;
+          state.selectedCategory = record.category;
+          state.rating = Number(record.rating) || 0;
+          state.imageData = record.image || '';
+          el.titleInput.value = record.title;
+          el.reviewInput.value = record.review || '';
+          updateImagePreview();
+          renderCategoryOptions();
+          renderRatingInput();
+        }
+        el.formModal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeForm() {
+        el.formModal.classList.remove('show');
+        document.body.style.overflow = '';
+      }
+
+      function resetForm() {
+        el.recordForm.reset();
+        el.formTitle.textContent = '새 감상 기록';
+        el.saveBtn.textContent = '저장하기';
+        el.editingId.value = '';
+        state.selectedCategory = '';
+        state.rating = 0;
+        state.imageData = '';
+        updateImagePreview();
+        renderCategoryOptions();
+        renderRatingInput();
+        hideFormError();
+      }
+
+      function updateImagePreview() {
+        const hasImage = Boolean(state.imageData);
+        el.previewWrap.classList.toggle('show', hasImage);
+        el.pickerCopy.style.display = hasImage ? 'none' : 'block';
+        el.imagePreview.src = hasImage ? state.imageData : '';
+      }
+
+      async function compressImage(file) {
+        if (!file.type.startsWith('image/')) throw new Error('이미지 파일만 선택할 수 있습니다.');
+        if (file.size > 20 * 1024 * 1024) throw new Error('20MB 이하의 이미지를 선택해주세요.');
+
+        const source = await fileToDataURL(file);
+        const image = await loadImage(source);
+        const maxDimension = 1200;
+        const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+
+        const context = canvas.getContext('2d');
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/jpeg', 0.78);
+      }
+
+      function fileToDataURL(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error('파일을 읽을 수 없습니다.'));
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function loadImage(src) {
+        return new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = () => reject(new Error('이미지를 불러올 수 없습니다.'));
+          image.src = src;
+        });
+      }
+
+      function showFormError(message) {
+        el.formError.textContent = message;
+        el.formError.classList.add('show');
+      }
+
+      function hideFormError() {
+        el.formError.classList.remove('show');
+        el.formError.textContent = '';
+      }
+
+      function saveRecord(event) {
+        event.preventDefault();
+        hideFormError();
+
+        const title = el.titleInput.value.trim();
+        const review = el.reviewInput.value.trim();
+
+        if (!state.selectedCategory) {
+          showFormError('카테고리를 선택해주세요.');
+          return;
+        }
+        if (!title) {
+          showFormError('작품 제목을 입력해주세요.');
+          el.titleInput.focus();
+          return;
+        }
+
+        const editingId = el.editingId.value;
+        const existing = state.records.find(record => record.id === editingId);
+        const record = {
+          id: editingId || createId(),
+          category: state.selectedCategory,
+          title,
+          image: state.imageData,
+          rating: state.rating,
+          review,
+          createdAt: existing?.createdAt || Date.now(),
+          updatedAt: Date.now()
+        };
+
+        if (editingId) {
+          state.records = state.records.map(item => item.id === editingId ? record : item);
+        } else {
+          state.records.push(record);
+        }
+
+        if (!persistRecords()) return;
+        renderRecords();
+        renderStats();
+        closeForm();
+        showScreen('homeScreen');
+        showToast(editingId ? '기록을 수정했습니다.' : '감상을 저장했습니다.');
+      }
+
+      function openDetail(id) {
+        const record = state.records.find(item => item.id === id);
+        if (!record) return;
+        const category = getCategory(record.category);
+        const rating = Number(record.rating) || 0;
+        const coverHTML = record.image
+          ? `<img src="${record.image}" alt="${escapeHTML(record.title)} 이미지">`
+          : `<div class="placeholder-cover" style="--card-a:${category.colors[0]};--card-b:${category.colors[1]}">${category.emoji}</div>`;
+
+        el.detailContent.innerHTML = `
+          <div class="detail-cover">${coverHTML}</div>
+          <div class="detail-head">
+            <div>
+              <h2 id="detailTitle">${escapeHTML(record.title)}</h2>
+              <div class="detail-meta">${category.emoji} ${category.label} · ${formatDate(record.createdAt)}</div>
+            </div>
+          </div>
+          <div class="detail-rating">${rating ? '★'.repeat(rating) + '☆'.repeat(5 - rating) : '별점 없음'}</div>
+          <p class="detail-review">${record.review ? escapeHTML(record.review) : '작성된 감상평이 없습니다.'}</p>
+          <div class="detail-actions">
+            <button class="secondary-btn" data-action="edit">수정</button>
+            <button class="danger-btn" data-action="delete">삭제</button>
+          </div>
+        `;
+
+        el.detailContent.querySelector('[data-action="edit"]').addEventListener('click', () => {
+          closeDetail();
+          openForm(record);
+        });
+
+        el.detailContent.querySelector('[data-action="delete"]').addEventListener('click', () => {
+          const confirmed = confirm(`‘${record.title}’ 기록을 삭제하시겠습니까?`);
+          if (!confirmed) return;
+          state.records = state.records.filter(item => item.id !== record.id);
+          persistRecords();
+          renderRecords();
+          renderStats();
+          closeDetail();
+          showToast('기록을 삭제했습니다.');
+        });
+
+        el.detailModal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeDetail() {
+        el.detailModal.classList.remove('show');
+        document.body.style.overflow = '';
+      }
+
+      let toastTimer;
+      function showToast(message) {
+        clearTimeout(toastTimer);
+        el.toast.textContent = message;
+        el.toast.classList.add('show');
+        toastTimer = setTimeout(() => el.toast.classList.remove('show'), 2200);
+      }
+
+      el.navButtons.forEach(button => {
+        button.addEventListener('click', () => showScreen(button.dataset.screen));
+      });
+      el.addFab.addEventListener('click', () => openForm());
+      el.emptyAddBtn.addEventListener('click', () => openForm());
+      el.closeFormBtn.addEventListener('click', closeForm);
+      el.closeDetailBtn.addEventListener('click', closeDetail);
+      el.recordForm.addEventListener('submit', saveRecord);
+
+      el.titleInput.addEventListener('input', hideFormError);
+
+      el.imageInput.addEventListener('change', async event => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        el.pickerCopy.innerHTML = '<div class="picker-icon">◌</div><strong>이미지를 최적화하고 있습니다</strong>잠시만 기다려주세요.';
+        el.pickerCopy.style.display = 'block';
+        try {
+          state.imageData = await compressImage(file);
+          updateImagePreview();
+        } catch (error) {
+          showFormError(error.message || '이미지를 처리하지 못했습니다.');
+          state.imageData = '';
+          updateImagePreview();
+        } finally {
+          el.pickerCopy.innerHTML = '<div class="picker-icon">▧</div><strong>사진을 선택하거나 촬영하세요</strong>JPG, PNG 등 이미지 파일을 자동으로 최적화합니다.';
+          event.target.value = '';
+        }
+      });
+
+      el.removeImageBtn.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        state.imageData = '';
+        updateImagePreview();
+      });
+
+      [el.formModal, el.detailModal].forEach(modal => {
+        modal.addEventListener('click', event => {
+          if (event.target !== modal) return;
+          modal === el.formModal ? closeForm() : closeDetail();
+        });
+      });
+
+      document.addEventListener('keydown', event => {
+        if (event.key !== 'Escape') return;
+        if (el.formModal.classList.contains('show')) closeForm();
+        if (el.detailModal.classList.contains('show')) closeDetail();
+      });
+
+      renderFilters();
+      renderRecords();
+      renderCategoryOptions();
+      renderRatingInput();
+      renderStats();
+    })();
+  </script>
+</body>
+</html>
